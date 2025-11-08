@@ -35,8 +35,15 @@
 
     <!-- Variáveis Globais (Configuração da API) -->
     <script>
-        // Use a chave API vazia, o Canvas a fornecerá em tempo de execução
-        const API_KEY = ""; 
+        // ***************************************************************
+        // *** PASSO CRÍTICO: SUBSTITUA O TEXTO ABAIXO PELA SUA CHAVE API VÁLIDA. ***
+        // *** O erro HTTP 400 indica que a chave inserida é inválida ou expirou. ***
+        // *** Você DEVE garantir que a chave aqui seja a SUA chave REAL e ATIVA. ***
+        // Linha 42 do chokmah_business.html
+        const API_KEY = "AIzaSyCBOK9QqQAt9XpBrOCh37NTZ2syU8dbHns"; // <<< CHAVE VÁLIDA INSERIDA AQUI >>>
+        // ***************************************************************
+        
+        // Agora, construímos a URL com a chave para resolver o erro 403 no GitHub Pages.
         const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
         
         // --- INSTRUÇÃO PRINCIPAL DO ALGORITMO CHOKMAH (SOLA SCRIPTURA) ---
@@ -68,9 +75,15 @@
          * @param {string} userQuery - A consulta do usuário.
          */
         async function generateAdvice(userQuery) {
-            const inputElement = document.getElementById('user-query');
             const loadingIndicator = document.getElementById('loading-indicator');
             const resultDiv = document.getElementById('result-content');
+            
+            // Verifica se a chave foi inserida.
+            if (API_KEY === "SUA_CHAVE_API_GEMINI_AQUI" || !API_KEY) {
+                // Nova verificação para Erro 2
+                displayError("A chave de API não foi configurada. Por favor, insira sua chave válida no código-fonte.");
+                return;
+            }
             
             // 1. Mostrar estado de carregamento e limpar resultados
             resultDiv.innerHTML = '';
@@ -89,6 +102,7 @@
 
             for (let attempt = 0; attempt < maxRetries; attempt++) {
                 try {
+                    // O API_URL agora contém a chave API
                     const response = await fetch(API_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -97,7 +111,9 @@
 
                     if (!response.ok) {
                         const errorData = await response.json();
-                        throw new Error(`HTTP error! status: ${response.status}. Details: ${errorData.error?.message || 'Unknown error.'}`);
+                        // Captura o status e a mensagem de erro
+                        const errorMessage = errorData.error?.message || 'Unknown error.';
+                        throw new Error(`HTTP error! status: ${response.status}. Details: ${errorMessage}`);
                     }
 
                     const result = await response.json();
@@ -248,4 +264,5 @@
         <p>Chokmah - Business | Fundamentado no princípio Sola Scriptura.</p>
     </footer>
 </body>
+</html>
 </html>
