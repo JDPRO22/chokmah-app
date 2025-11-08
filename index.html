@@ -35,9 +35,9 @@
 
     <!-- Variáveis Globais (Configuração da API) -->
     <script>
-        // Use a chave API vazia, o Canvas a fornecerá em tempo de execução
-        const API_KEY = ""; 
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
+        // REMOVIDA A CONSTRUÇÃO DINÂMICA DA URL. USAMOS APENAS O ENDPOINT BASE.
+        // O Canvas/GitHub Pages injetará a chave ou token de autenticação via cabeçalho automaticamente.
+        const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent";
         
         // --- INSTRUÇÃO PRINCIPAL DO ALGORITMO CHOKMAH (SOLA SCRIPTURA) ---
         const systemInstruction = `
