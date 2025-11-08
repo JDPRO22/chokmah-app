@@ -35,9 +35,12 @@
 
     <!-- Variáveis Globais (Configuração da API) -->
     <script>
-        // REMOVIDA A CONSTRUÇÃO DINÂMICA DA URL. USAMOS APENAS O ENDPOINT BASE.
-        // O Canvas/GitHub Pages injetará a chave ou token de autenticação via cabeçalho automaticamente.
-        const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent";
+        // *** PASSO CRÍTICO: VOCÊ PRECISA SUBSTITUIR O TEXTO ABAIXO PELA SUA CHAVE API VÁLIDA. ***
+        // O Canvas injeta o token automaticamente, mas o GitHub Pages precisa da chave explícita.
+        const API_KEY = "SUA_CHAVE_API_GEMINI_AQUI"; 
+        
+        // Agora, construímos a URL com a chave para resolver o erro 403 no GitHub Pages.
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
         
         // --- INSTRUÇÃO PRINCIPAL DO ALGORITMO CHOKMAH (SOLA SCRIPTURA) ---
         const systemInstruction = `
@@ -72,6 +75,12 @@
             const loadingIndicator = document.getElementById('loading-indicator');
             const resultDiv = document.getElementById('result-content');
             
+            // Verifica se a chave foi inserida.
+            if (API_KEY === "SUA_CHAVE_API_GEMINI_AQUI" || !API_KEY) {
+                displayError("A chave de API não foi configurada. Por favor, insira sua chave válida no código-fonte.");
+                return;
+            }
+            
             // 1. Mostrar estado de carregamento e limpar resultados
             resultDiv.innerHTML = '';
             loadingIndicator.classList.remove('hidden');
@@ -89,6 +98,7 @@
 
             for (let attempt = 0; attempt < maxRetries; attempt++) {
                 try {
+                    // O API_URL agora contém a chave API
                     const response = await fetch(API_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
