@@ -37,8 +37,8 @@
     <script>
         // ***************************************************************
         // *** PASSO CRÍTICO: SUBSTITUA O TEXTO ABAIXO PELA SUA CHAVE API VÁLIDA. ***
-        // *** SE CONTINUAR RECEBENDO ERROS 400/403, VERIFIQUE NO CONSOLE DO GOOGLE AI STUDIO ***
-        // *** SE A CHAVE ESTÁ ATIVA E SE O MODELO gemini-2.5-flash-preview-09-2025 ESTÁ HABILITADO. ***
+        // *** VOCÊ DEVE GARANTIR QUE ESTA CHAVE ESTEJA ATIVA E SEJA EXATAMENTE A CHAVE ***
+        // *** FORNECIDA PELO GOOGLE AI STUDIO PARA O GEMINI API. ***
         const API_KEY = "SUA_CHAVE_API_GEMINI_AQUI"; 
         // ***************************************************************
         
@@ -74,12 +74,12 @@
          * @param {string} userQuery - A consulta do usuário.
          */
         async function generateAdvice(userQuery) {
-            const inputElement = document.getElementById('user-query');
             const loadingIndicator = document.getElementById('loading-indicator');
             const resultDiv = document.getElementById('result-content');
             
             // Verifica se a chave foi inserida.
             if (API_KEY === "SUA_CHAVE_API_GEMINI_AQUI" || !API_KEY) {
+                // Nova verificação para Erro 2
                 displayError("A chave de API não foi configurada. Por favor, insira sua chave válida no código-fonte.");
                 return;
             }
@@ -110,7 +110,9 @@
 
                     if (!response.ok) {
                         const errorData = await response.json();
-                        throw new Error(`HTTP error! status: ${response.status}. Details: ${errorData.error?.message || 'Unknown error.'}`);
+                        // Captura o status e a mensagem de erro
+                        const errorMessage = errorData.error?.message || 'Unknown error.';
+                        throw new Error(`HTTP error! status: ${response.status}. Details: ${errorMessage}`);
                     }
 
                     const result = await response.json();
@@ -261,5 +263,4 @@
         <p>Chokmah - Business | Fundamentado no princípio Sola Scriptura.</p>
     </footer>
 </body>
-</html>
 </html>
