@@ -35,9 +35,12 @@
 
     <!-- Variáveis Globais (Configuração da API) -->
     <script>
+        // ***************************************************************
         // *** PASSO CRÍTICO: SUBSTITUA O TEXTO ABAIXO PELA SUA CHAVE API VÁLIDA. ***
-        // A chave API deve ser exatamente o valor que você copiou do Google AI Studio.
+        // *** SE CONTINUAR RECEBENDO ERROS 400/403, VERIFIQUE NO CONSOLE DO GOOGLE AI STUDIO ***
+        // *** SE A CHAVE ESTÁ ATIVA E SE O MODELO gemini-2.5-flash-preview-09-2025 ESTÁ HABILITADO. ***
         const API_KEY = "SUA_CHAVE_API_GEMINI_AQUI"; 
+        // ***************************************************************
         
         // Agora, construímos a URL com a chave para resolver o erro 403 no GitHub Pages.
         const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
@@ -258,4 +261,5 @@
         <p>Chokmah - Business | Fundamentado no princípio Sola Scriptura.</p>
     </footer>
 </body>
+</html>
 </html>
