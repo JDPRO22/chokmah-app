@@ -11,23 +11,48 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f7f7ff; /* Fundo suave */
+            background-color: #f0f4f8; /* Fundo mais neutro */
         }
-        /* Estilo para a resposta formatada */
-        #result-content p {
-            margin-bottom: 1rem;
-        }
+
+        /* Cores Personalizadas para Sóbrias */
+        .color-primary { color: #0A1931; } /* Azul Marinho Profundo */
+        .bg-primary { background-color: #0A1931; }
+        .bg-secondary { background-color: #FFD700; } /* Amarelo Ouro (Acento) */
+        .text-secondary { color: #FFD700; }
+
+        /* Estilo para a resposta (Efeito Pergaminho) */
+        #result-content p { margin-bottom: 1rem; }
         #result-content strong {
             font-weight: 700;
-            color: #2563eb; /* Azul para destaque */
+            color: #0A1931; /* Forte e Autoridade */
         }
+
+        /* Estilo para o bloco de conselho */
+        .advice-card {
+            background-color: #fffff0; /* Creme Suave (Efeito Pergaminho) */
+            border: 1px solid #e0e0e0;
+        }
+        
+        /* Loading Spinner */
         .loading-spinner {
-            border-top-color: #1e3a8a;
+            border-top-color: #FFD700; /* Spinner em cor de acento */
             -webkit-animation: spin 1s ease-in-out infinite;
             animation: spin 1s ease-in-out infinite;
         }
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+
+        /* Animação do Microfone (Ouvindo) */
+        .mic-listening {
+            animation: pulse-mic 1.5s infinite;
+            background-color: #ef4444; /* Fundo Vermelho */
+            color: white !important;
+        }
+        @keyframes pulse-mic {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
     </style>
 </head>
@@ -36,14 +61,9 @@
     <!-- Variáveis Globais (Configuração da API) -->
     <script>
         // ***************************************************************
-        // *** PASSO CRÍTICO: SUBSTITUA O TEXTO ABAIXO PELA SUA CHAVE API VÁLIDA. ***
-        // *** O erro HTTP 400 indica que a chave inserida é inválida ou expirou. ***
-        // *** Você DEVE garantir que a chave aqui seja a SUA chave REAL e ATIVA. ***
-        // Linha 42 do index.html (antigo chokmah_business.html)
-        const API_KEY = "AIzaSyCBOK9QqQAt9XpBrOCh37NTZ2syU8dbHns"; // <<< CHAVE VÁLIDA INSERIDA AQUI >>>
+        // *** Chave API para o modelo Gemini. ***
         // ***************************************************************
-        
-        // Agora, construímos a URL com a chave para resolver o erro 403 no GitHub Pages.
+        const API_KEY = "AIzaSyCBOK9QqQAt9XpBrOCh37NTZ2syU8dbHns"; // <<< CHAVE VÁLIDA INSERIDA AQUI >>>
         const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
         
         // --- INSTRUÇÃO PRINCIPAL DO ALGORITMO CHOKMAH (SOLA SCRIPTURA) ---
@@ -55,6 +75,10 @@
             Mantenha o tom de conselheiro sábio, sério e fundamentado.
         `;
 
+        // Instância global para o reconhecimento de voz
+        let recognition = null;
+        let isListening = false;
+        
         /**
          * Constrói e exibe a interface de erro de forma clara.
          * @param {string} message - A mensagem de erro a ser exibida.
@@ -62,7 +86,7 @@
         function displayError(message) {
             const resultDiv = document.getElementById('result-content');
             resultDiv.innerHTML = `
-                <div class="p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg" role="alert">
+                <div class="p-4 bg-red-100 border border-red-400 text-red-700 rounded-xl" role="alert">
                     <p class="font-bold">Erro de Conexão ou Processamento</p>
                     <p>${message}</p>
                 </div>
@@ -78,9 +102,7 @@
             const loadingIndicator = document.getElementById('loading-indicator');
             const resultDiv = document.getElementById('result-content');
             
-            // Verifica se a chave foi inserida.
             if (API_KEY === "SUA_CHAVE_API_GEMINI_AQUI" || !API_KEY) {
-                // Nova verificação para Erro 2
                 displayError("A chave de API não foi configurada. Por favor, insira sua chave válida no código-fonte.");
                 return;
             }
@@ -92,7 +114,6 @@
             // 2. Construção do Payload da API
             const payload = {
                 contents: [{ parts: [{ text: userQuery }] }],
-                // Habilitamos o Google Search para contextualizar a dúvida (embora a resposta seja bíblica)
                 tools: [{ "google_search": {} }],
                 systemInstruction: { parts: [{ text: systemInstruction }] },
             };
@@ -102,7 +123,6 @@
 
             for (let attempt = 0; attempt < maxRetries; attempt++) {
                 try {
-                    // O API_URL agora contém a chave API
                     const response = await fetch(API_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -111,13 +131,11 @@
 
                     if (!response.ok) {
                         const errorData = await response.json();
-                        // Captura o status e a mensagem de erro
                         const errorMessage = errorData.error?.message || 'Unknown error.';
                         throw new Error(`HTTP error! status: ${response.status}. Details: ${errorMessage}`);
                     }
 
                     const result = await response.json();
-                    
                     const candidate = result.candidates?.[0];
 
                     if (candidate && candidate.content?.parts?.[0]?.text) {
@@ -132,7 +150,7 @@
                                     uri: attribution.web?.uri,
                                     title: attribution.web?.title,
                                 }))
-                                .filter(source => source.uri && source.title); // Filtra por fontes válidas
+                                .filter(source => source.uri && source.title);
                         }
 
                         // 4. Exibir o resultado
@@ -140,13 +158,13 @@
                         
                         // Formata o texto para exibição (usando Markdown simples)
                         const formattedText = text
-                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
-                            .replace(/\n/g, '<br>'); // Novas linhas
+                            .replace(/\*\*(.*?)\*\*/g, '<strong class="color-primary">$1</strong>')
+                            .replace(/\n/g, '<br>');
                         
                         resultDiv.innerHTML = `
-                            <div class="bg-white p-6 rounded-xl shadow-lg border border-indigo-100">
-                                <h3 class="text-2xl font-bold text-indigo-800 mb-4 border-b pb-2">O Conselho de Chokmah</h3>
-                                <div id="advice-text" class="text-gray-700 leading-relaxed">${formattedText}</div>
+                            <div class="advice-card p-6 rounded-xl shadow-2xl border-t-8 border-yellow-600">
+                                <h3 class="text-3xl font-extrabold color-primary mb-4 pb-2">O Conselho de Chokmah</h3>
+                                <div id="advice-text" class="text-gray-800 leading-relaxed text-lg">${formattedText}</div>
                                 ${sources.length > 0 ? displaySources(sources) : ''}
                             </div>
                         `;
@@ -159,7 +177,7 @@
                     lastError = error;
                     console.error(`Tentativa ${attempt + 1} falhou:`, error.message);
                     if (attempt < maxRetries - 1) {
-                        const delay = Math.pow(2, attempt) * 1000; // Backoff exponencial
+                        const delay = Math.pow(2, attempt) * 1000;
                         await new Promise(resolve => setTimeout(resolve, delay));
                     }
                 }
@@ -175,11 +193,11 @@
          * @returns {string} - HTML formatado.
          */
         function displaySources(sources) {
-            let html = '<div class="mt-6 pt-4 border-t border-gray-200 text-sm text-gray-500">';
-            html += '<p class="font-semibold mb-2">Fontes Consultadas (para contextualização):</p>';
-            html += '<ul class="list-disc list-inside space-y-1">';
+            let html = '<div class="mt-6 pt-4 border-t border-gray-300 text-sm text-gray-600">';
+            html += '<p class="font-semibold mb-2 color-primary">Fontes Consultadas (para contextualização):</p>';
+            html += '<ul class="list-disc list-inside space-y-1 ml-4">';
             sources.slice(0, 3).forEach(source => { // Limita a 3 fontes para brevidade
-                html += `<li><a href="${source.uri}" target="_blank" class="text-indigo-600 hover:text-indigo-800">${source.title}</a></li>`;
+                html += `<li><a href="${source.uri}" target="_blank" class="text-blue-700 hover:text-blue-900 font-medium">${source.title}</a></li>`;
             });
             html += '</ul></div>';
             return html;
@@ -198,46 +216,146 @@
             }
         }
         
-        // Anexa o manipulador de eventos ao formulário após o carregamento da página
+        /**
+         * Configura a API de Reconhecimento de Fala.
+         */
+        function setupSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const micButton = document.getElementById('mic-button');
+            const userQueryField = document.getElementById('user-query');
+
+            if (!SpeechRecognition) {
+                micButton.disabled = true;
+                micButton.title = "Reconhecimento de Voz não suportado neste navegador.";
+                displayError("Seu navegador não suporta a API de Reconhecimento de Voz. Por favor, utilize um navegador moderno como Chrome ou Edge.");
+                return;
+            }
+
+            recognition = new SpeechRecognition();
+            // Define o idioma para Português do Brasil (pt-BR)
+            recognition.lang = 'pt-BR'; 
+            // Permite resultados provisórios
+            recognition.interimResults = false; 
+            // Captura o resultado após a fala terminar
+            recognition.continuous = false; 
+
+            // Inicia o reconhecimento
+            micButton.addEventListener('click', () => {
+                if (isListening) {
+                    recognition.stop();
+                    return;
+                }
+                
+                try {
+                    recognition.start();
+                } catch (e) {
+                    // Ocorre se for tentado iniciar enquanto já está ativo
+                    console.warn("Reconhecimento de fala já está ativo ou falhou ao iniciar.");
+                }
+            });
+
+            // Evento quando a API começa a ouvir
+            recognition.onstart = () => {
+                isListening = true;
+                micButton.classList.add('mic-listening');
+                micButton.title = "Ouvindo... Clique para parar.";
+                userQueryField.placeholder = "Ouvindo sua dúvida de negócios...";
+            };
+
+            // Evento quando a API para de ouvir
+            recognition.onend = () => {
+                isListening = false;
+                micButton.classList.remove('mic-listening');
+                micButton.title = "Falar a Dúvida (Clique para começar)";
+                userQueryField.placeholder = "Ex: Devo fazer sociedade com um amigo que tem um bom projeto, mas é endividado? Qual a visão bíblica sobre emprestar dinheiro a juros?";
+            };
+
+            // Evento quando um resultado é recebido
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                if (transcript) {
+                    userQueryField.value = transcript;
+                    // Submete automaticamente a pesquisa
+                    document.getElementById('advice-form').dispatchEvent(new Event('submit'));
+                }
+            };
+
+            // Evento de erro
+            recognition.onerror = (event) => {
+                isListening = false;
+                micButton.classList.remove('mic-listening');
+                userQueryField.placeholder = "Ex: Devo fazer sociedade com um amigo que tem um bom projeto, mas é endividado? Qual a visão bíblica sobre emprestar dinheiro a juros?";
+                let message = "Ocorreu um erro no reconhecimento de voz.";
+                if (event.error === 'not-allowed') {
+                    message = "Permissão de microfone negada. Por favor, ative nas configurações do navegador.";
+                } else if (event.error === 'no-speech') {
+                    message = "Nenhuma fala detectada. Tente novamente.";
+                }
+                displayError(`Erro de Voz: ${message}`);
+            };
+        }
+        
+        // Inicializa o formulário e a API de voz
         window.onload = () => {
             const form = document.getElementById('advice-form');
             if (form) {
                 form.addEventListener('submit', handleSubmit);
             }
+            setupSpeechRecognition();
         };
 
     </script>
 
     <!-- Cabeçalho Principal -->
-    <header class="w-full bg-indigo-800 text-white p-6 shadow-xl">
+    <header class="w-full bg-primary text-white p-6 shadow-xl">
         <div class="container mx-auto max-w-4xl text-center">
-            <h1 class="text-4xl font-extrabold tracking-tight mb-2">Chokmah - Business</h1>
-            <p class="text-xl font-light italic">Sabedoria (חכמה) para seus Negócios</p>
+             <!-- Ícone de Coruja (Sabedoria) -->
+            <svg class="mx-auto w-10 h-10 text-secondary mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 17.58A5.996 5.996 0 0 0 12 15a5.996 5.996 0 0 0-8 2.58V5h16v12.58z"/>
+                <path d="M14 13l-2-2-2 2"/>
+                <circle cx="10" cy="8" r="1"/>
+                <circle cx="14" cy="8" r="1"/>
+            </svg>
+            <h1 class="text-4xl font-extrabold tracking-wide mb-1 flex justify-center items-center">
+                Chokmah <span class="text-secondary ml-2">- Business</span>
+            </h1>
+            <p class="text-xl font-light italic opacity-90">Sabedoria (חכמה) para seus Negócios</p>
         </div>
     </header>
 
     <!-- Conteúdo Principal e Formulário -->
     <main class="container mx-auto p-4 md:p-8 max-w-4xl flex-grow">
         
-        <!-- Seção de Instrução / Filosofia -->
-        <section class="mb-8 p-6 bg-indigo-50 border-l-4 border-indigo-500 rounded-r-lg shadow-md">
-            <h2 class="text-2xl font-semibold text-indigo-700 mb-3">O Filtro do *Sola Scriptura*</h2>
-            <p class="text-gray-700">
+        <!-- Seção de Instrução / Filosofia (Melhor Contraste) -->
+        <section class="mb-10 p-6 bg-white border-l-4 border-yellow-600 rounded-r-lg shadow-lg">
+            <h2 class="text-2xl font-bold color-primary mb-3">O Filtro do *Sola Scriptura*</h2>
+            <p class="text-gray-700 leading-relaxed">
                 Nossas orientações são baseadas estritamente na **Sabedoria Bíblica** (Chokmah). Utilizamos a Escritura como nossa única autoridade para decisões de negócios, priorizando princípios de **Diligência, Integridade, Mordomia e Justiça**.
             </p>
-            <p class="text-gray-500 mt-2 text-sm">
+            <p class="text-gray-500 mt-2 text-sm italic">
                 *Rejeitamos ensinamentos que promovem riqueza rápida ou contrariam a ética e a moralidade bíblica.*
             </p>
         </section>
 
         <!-- Área de Consulta -->
-        <section class="bg-white p-6 md:p-8 rounded-xl shadow-2xl">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">Qual é a sua dúvida de negócios?</h2>
+        <section class="bg-white p-6 md:p-8 rounded-xl shadow-2xl border border-gray-200">
+            <h2 class="text-2xl font-extrabold color-primary mb-5">Qual é a sua dúvida de negócios?</h2>
             
             <form id="advice-form">
-                <textarea id="user-query" rows="5" placeholder="Ex: Devo fazer sociedade com um amigo que tem um bom projeto, mas é endividado? Qual a visão bíblica sobre emprestar dinheiro a juros?" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 resize-y"></textarea>
+                <div class="flex space-x-3 mb-4">
+                    <textarea id="user-query" rows="5" placeholder="Ex: Devo fazer sociedade com um amigo que tem um bom projeto, mas é endividado? Qual a visão bíblica sobre emprestar dinheiro a juros?" class="flex-grow p-4 border-2 border-gray-300 rounded-xl focus:ring-blue-800 focus:border-blue-800 transition duration-200 resize-y text-gray-700"></textarea>
+                    
+                    <!-- Botão de Microfone -->
+                    <button type="button" id="mic-button" title="Falar a Dúvida (Clique para começar)" class="self-start mt-1 w-14 h-14 flex items-center justify-center bg-gray-200 text-primary rounded-full shadow-lg hover:bg-gray-300 transition duration-150 flex-shrink-0">
+                        <!-- Ícone do Microfone (SVG) -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                        </svg>
+                    </button>
+                </div>
                 
-                <button type="submit" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 shadow-md transform hover:scale-[1.01] focus:outline-none focus:ring-4 focus:ring-indigo-300">
+                <button type="submit" class="w-full bg-primary hover:bg-opacity-90 text-white font-extrabold py-4 px-4 rounded-xl transition duration-300 shadow-xl transform hover:scale-[1.01] focus:outline-none focus:ring-4 focus:ring-blue-900 focus:ring-opacity-50">
                     Buscar o Conselho de Chokmah
                 </button>
             </form>
@@ -245,14 +363,14 @@
             <!-- Indicador de Carregamento -->
             <div id="loading-indicator" class="hidden flex items-center justify-center mt-8 p-4">
                 <div class="loading-spinner h-8 w-8 rounded-full border-4 border-t-4 border-gray-200"></div>
-                <p class="ml-3 text-indigo-600 font-medium">Aguardando o Espírito de Sabedoria...</p>
+                <p class="ml-3 text-primary font-medium">Aguardando o Espírito de Sabedoria...</p>
             </div>
 
             <!-- Área de Resultados -->
-            <div id="result-content" class="mt-8">
+            <div id="result-content" class="mt-10">
                 <!-- O conselho da IA será injetado aqui -->
-                <div class="bg-gray-100 p-6 rounded-xl shadow-inner text-gray-600 text-center">
-                    <p>Seu conselho aparecerá aqui, fundamentado na autoridade da Escritura.</p>
+                <div class="advice-card p-6 rounded-xl shadow-inner text-gray-600 text-center border-l-8 border-yellow-500">
+                    <p class="text-lg">Seu conselho aparecerá aqui, fundamentado na autoridade da Escritura. Comece perguntando!</p>
                 </div>
             </div>
         </section>
@@ -260,8 +378,8 @@
     </main>
 
     <!-- Rodapé -->
-    <footer class="w-full bg-gray-200 mt-12 p-4 text-center text-sm text-gray-600">
-        <p>Chokmah - Business | Fundamentado no princípio Sola Scriptura.</p>
+    <footer class="w-full bg-primary mt-12 p-4 text-center text-sm text-gray-300">
+        <p>Chokmah - Business | Fundamentado no princípio *Sola Scriptura*.</p>
     </footer>
 </body>
 </html>
